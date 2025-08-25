@@ -95,11 +95,14 @@ async function scrapeInitialCompanyList(page, selector) {
 async function enrichCompanies(browser, companies) {
     const enrichedData = [];
     // Batasi 5 perusahaan untuk tes cepat. Hapus .slice(0, 5) untuk mengambil semua.
-    for (const company of companies.slice(0, 5)) {
+    for (const company of companies.slice(0, 10)) {
         console.log(`\n📋 Memproses: ${company.name}`);
         
+        let companyData = { ...company, location: 'N/A', social: {}, technologies: [], enrichment_status: 'failed' };
+
         if (!company.website) {
-            enrichedData.push({ ...company, location: 'N/A', social: {}, technologies: [] });
+            companyData.enrichment_status = 'no_website';
+            enrichedData.push(companyData);
             continue;
         }
 
@@ -107,16 +110,18 @@ async function enrichCompanies(browser, companies) {
         try {
             await companyPage.goto(company.website, { waitUntil: 'domcontentloaded', timeout: 15000 });
             const enrichment = await getEnrichmentData(companyPage);
-            enrichedData.push({ ...company, ...enrichment });
+            enrichedData.push({ ...company, ...enrichment, enrichment_status: 'success' });
+            console.log(`✅ Enrichment berhasil untuk ${company.name}`);
         } catch (enrichError) {
             console.log(`❌ Error enrichment untuk ${company.name}:`, enrichError.message.split('\n')[0]);
-            enrichedData.push({ ...company, location: 'N/A', social: {}, technologies: [] });
+            enrichedData.push(companyData);
         } finally {
             await companyPage.close();
         }
     }
     return enrichedData;
 }
+
 
 /**
  * Berjalan di konteks browser untuk mengambil data tambahan.
@@ -133,7 +138,9 @@ async function getEnrichmentData(page) {
         };
         document.querySelectorAll('a[href]').forEach(link => {
             for (const [platform, domain] of Object.entries(socialPlatforms)) {
-                if (link.href.includes(domain)) data.social[platform] = link.href;
+                if (link.href.includes(domain)) {
+                    data.social[platform] = link.href;
+                }
             }
         });
 
