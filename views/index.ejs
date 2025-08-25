@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Caprae Lead Scraper</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 2em;
+        background-color: #f4f4f9;
+        color: #333;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 2em;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+        margin-bottom: 2em;
+      }
+      input {
+        padding: 0.8em;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button {
+        padding: 0.8em 1.2em;
+        background-color: #0056b3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 0.8em;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      th {
+        background-color: #e9ecef;
+      }
+      a {
+        color: #0056b3;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Caprae Lead Scraper</h1>
+      <form action="/scrape" method="POST">
+        <input
+          type="text"
+          name="industry"
+          placeholder="Enter Industry (e.g., CRM)"
+          required
+        />
+        <input
+          type="text"
+          name="country"
+          placeholder="Enter Country (e.g., United States)"
+          required
+        />
+        <input
+          type="text"
+          name="city"
+          placeholder="Enter City/State (e.g., California)"
+          required
+        />
+        <button type="submit">Scrape Leads</button>
+      </form>
+
+      <% if (typeof results !== 'undefined') { %>
+      <h2>Scraping Results</h2>
+      <% if (results && results.length > 0) { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Company Name</th>
+            <th>Website</th>
+            <th>Location</th>
+            <th>Social Media</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% results.forEach(company => { %>
+          <tr>
+            <td><%= company.name %></td>
+            <td><a href="<%= company.website %>" target="_blank">Visit</a></td>
+            <td><%= company.location || 'N/A' %></td>
+            <td>
+              <% if (company.social) { %> <% for (const [platform, link] of
+              Object.entries(company.social)) { %>
+              <a href="<%= link %>" target="_blank"><%= platform %></a><br />
+              <% } %> <% } else { %> N/A <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } else { %>
+      <p>No results found or an error occurred during scraping.</p>
+      <% } %> <% } %>
+    </div>
+  </body>
+</html>
