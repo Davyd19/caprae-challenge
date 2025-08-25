@@ -1,52 +1,55 @@
-# Proyek Tantangan Developer Intern - Caprae Capital
+# Developer Intern Challenge Project - Caprae Capital
 
-## Deskripsi Proyek
-Proyek ini adalah pengembangan dan penyempurnaan dari alat lead generation saasquatchleads.com, yang merupakan bagian dari tantangan Developer Intern di Caprae Capital. Tujuan utamanya adalah untuk mengubah alat yang ada menjadi solusi yang lebih canggih dengan mengotomatiskan proses scraping, memperkaya data yang diperoleh, dan menyajikannya dalam antarmuka pengguna yang profesional dan modern.
+## Project Description
+This project is an enhancement of the saasquatchleads.com lead generation tool, as part of the Developer Intern challenge at Caprae Capital. The main objective is to transform the existing tool into a more advanced solution by automating the scraping process, enriching the obtained data, and presenting it in a professional and modern user interface.
 
-Aplikasi ini dibangun untuk menunjukkan kemampuan dalam rekayasa terbalik (reverse engineering) alur kerja situs web, mengatasi tantangan teknis seperti anti-bot, dan pada akhirnya, memberikan solusi yang andal dan fungsional untuk demo.
+This application was built to demonstrate the ability to reverse-engineer a website's workflow, overcome technical challenges such as anti-bot mechanisms, and ultimately, deliver a reliable and functional solution for a demo.
 
-## Fitur Utama
-Aplikasi ini memiliki beberapa fitur utama yang dirancang untuk meningkatkan proses lead generation:
+## Key Features
+This application has several key features designed to enhance the lead generation process:
 
-1. Antarmuka Pengguna Profesional: UI didesain ulang sepenuhnya dengan tema gelap yang modern dan bersih, terinspirasi dari situs referensi, untuk memberikan pengalaman pengguna yang lebih baik.
+1. Professional User Interface: The UI is completely redesigned with a modern and clean dark theme, inspired by the reference site, to provide a better user experience.
 
-2. Scraper Canggih dengan Mode Stealth: Menggunakan puppeteer-extra dengan plugin stealth untuk meniru perilaku pengguna manusia, dirancang untuk melewati mekanisme anti-scraping dasar.
+2. Advanced Scraper with Stealth Mode: Utilizes puppeteer-extra with a stealth plugin to mimic human user behavior, designed to bypass basic anti-scraping mechanisms.
 
-3. Logika Login Otomatis: Skrip secara otomatis menavigasi ke halaman login, memasukkan kredensial, dan mengelola sesi untuk mengakses halaman internal yang dilindungi.
+3. Automated Login Logic: The script automatically navigates to the login page, enters credentials, and manages the session to access protected internal pages.
 
-4. Interaksi Halaman Dinamis: Mampu menangani input autocomplete yang dinamis, di mana skrip mengetik, menunggu saran muncul, dan memilih opsi yang relevan.
+4. Dynamic Page Interaction: Capable of handling dynamic autocomplete inputs, where the script types, waits for suggestions to appear, and selects the relevant option.
 
-5. Fitur Fallback Data Dummy Cerdas: Jika proses scraping sungguhan gagal karena alasan apa pun (misalnya, CAPTCHA, perubahan UI, atau pemblokiran IP), aplikasi akan secara otomatis beralih untuk menyajikan data dummy yang relevan dan berkualitas tinggi. Ini memastikan aplikasi selalu berfungsi selama demo.
+5. Intelligent Dummy Data Fallback Feature: If the live scraping process fails for any reason (e.g., CAPTCHA, UI changes, or IP blocking), the application will automatically switch to serving relevant, high-quality dummy data. This ensures the application is always functional during a demo.
 
-6. Pop-up Detail Perusahaan: Pengguna dapat mengklik baris mana pun di tabel hasil untuk membuka jendela pop-up (modal) yang menampilkan informasi perusahaan yang lebih mendetail, seperti deskripsi, jumlah karyawan, tahun berdiri, dan kontak.
+6. Company Details Pop-up: Users can click any row in the results table to open a pop-up modal that displays more detailed company information, such as a description, employee count, founding year, and contact details.
 
-## Perjalanan Teknis & Solusi
-Proses pengembangan menghadapi tantangan utama dalam melakukan scraping terhadap saasquatchleads.com, yang merupakan Single Page Application (SPA) modern yang dilindungi dengan baik.
+## Technical Journey & Solutions
+The development process faced a primary challenge in scraping saasquatchleads.com, which is a well-protected, modern Single Page Application (SPA).
 
-1. Tantangan Login: Ditemukan bahwa halaman scraper hanya dapat diakses setelah pengguna melakukan login. Solusinya adalah mengimplementasikan alur login otomatis.
+1. Login Challenge: It was discovered that the scraper page was only accessible after a user logs in. The solution was to implement an automated login flow.
 
-2. Masalah Anti-Scraping: Meskipun berhasil login, skrip masih gagal menemukan elemen form. Ini mengindikasikan adanya mekanisme anti-bot yang mendeteksi Puppeteer. Solusinya adalah beralih dari Puppeteer standar ke puppeteer-extra dengan puppeteer-extra-plugin-stealth.
+2. Anti-Scraping Issues: Even after a successful login, the script still failed to find the form elements. This indicated an anti-bot mechanism detecting Puppeteer. The solution was to switch from standard Puppeteer to puppeteer-extra with puppeteer-extra-plugin-stealth.
 
-3. Keputusan Strategis (Fallback System): Mengingat situs target sangat terlindungi dan bisa saja mengimplementasikan CAPTCHA atau pemblokiran IP yang tidak dapat diatasi dalam waktu singkat, keputusan strategis dibuat untuk membangun sistem fallback. Logika scraper sungguhan tetap ada, tetapi jika gagal, aplikasi akan menyajikan data dummy yang kaya. Ini menjamin demo aplikasi selalu berjalan mulus sambil tetap menunjukkan kemampuan untuk membangun logika scraping yang kompleks.
+3. Strategic Decision (Fallback System): Acknowledging that the target site is heavily protected and could implement CAPTCHAs or IP blocks that are difficult to overcome in a short time, a strategic decision was made to build a fallback system. The live scraping logic remains, but if it fails, the application serves rich dummy data. This guarantees a smooth demo while still showcasing the ability to build complex scraping logic.
 
-## Tumpukan Teknologi (Technology Stack)
-Backend: Node.js, Express.js
+## Technology Stack
+**Backend:** Node.js, Express.js
 
-Frontend: EJS (Embedded JavaScript templates), Tailwind CSS
+**Frontend:** EJS (Embedded JavaScript templates), Tailwind CSS
 
-Web Scraping: Puppeteer, Puppeteer-Extra, Puppeteer-Extra-Plugin-Stealth
+**Web Scraping:** Puppeteer, Puppeteer-Extra, Puppeteer-Extra-Plugin-Stealth
 
-Development Environment: Node.js, NPM
+**Development Environment:** Node.js, NPM
 
-## Cara Menjalankan Proyek
-1.  **Clone repositori ini.**
-2.  **Buka terminal di folder proyek.**
-3.  **Install semua paket yang dibutuhkan:**
-    ```bash
-    npm install
-    ```
-4.  **Jalankan server aplikasi:**
-    ```bash
-    node app.js
-    ```
-5.  **Buka browser Anda** dan kunjungi `http://localhost:3000`.
+## How to Run the Project
+1. **Clone this repository.**
+
+2. **Open a terminal in the project folder.**
+
+3. **Install all required packages:**
+```bash
+npm install
+```
+
+4. **Run the application server:**
+```bash
+node app.js
+```
+5. **Open your browser** and navigate to 'http://localhost:3000'.
