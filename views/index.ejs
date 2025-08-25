@@ -1,138 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caprae Lead Scraper - Advanced Lead Generation</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Caprae Lead Scraper</title>
+    <!-- Memuat Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --bg-dark: #111827;
-            --surface-dark: #1F2937;
-            --border-dark: #374151;
-            --primary: #4F46E5;
-            --primary-hover: #4338CA;
-            --text-light: #F9FAFB;
-            --text-muted: #9CA3AF;
-            --font-family: 'Inter', sans-serif;
+        /* Animasi untuk spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            padding: 2rem;
+        .loader {
+            border-top-color: #2dd4bf; /* Teal color from the site's gradient */
+            animation: spin 1s linear infinite;
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .card {
-            background-color: var(--surface-dark);
-            border: 1px solid var(--border-dark);
-            border-radius: 0.75rem;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        h1 { font-size: 2.25rem; font-weight: 700; text-align: center; margin-bottom: 0.5rem; }
-        .subtitle { color: var(--text-muted); text-align: center; margin-bottom: 2rem; font-size: 1.125rem; }
-        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem; }
-        .form-input {
-            width: 100%;
-            background-color: var(--border-dark);
-            color: var(--text-light);
-            border: 1px solid var(--border-dark);
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
-            font-size: 1rem;
-        }
-        .submit-btn {
-            width: 100%;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            padding: 0.875rem;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .submit-btn:hover { background-color: var(--primary-hover); }
-        .results-table { width: 100%; border-collapse: collapse; }
-        .results-table th, .results-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border-dark); }
-        .results-table th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
-        .company-name { font-weight: 600; }
-        .website-link { color: var(--primary); text-decoration: none; }
-        .social-links { display: flex; gap: 1rem; }
-        .social-link { color: var(--text-muted); font-size: 1.25rem; text-decoration: none; }
-        .tech-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-        .tech-tag { background-color: var(--border-dark); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; }
-        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="card">
-            <h1>Intelligent Lead Scraper</h1>
-            <p class="subtitle">Discover companies by industry and location.</p>
-            <form action="/scrape" method="POST">
-                <div class="form-grid">
-                    <input type="text" name="industry" class="form-input" placeholder="Industry (e.g., SaaS)" required>
-                    <input type="text" name="country" class="form-input" placeholder="Country (e.g., United States)" required>
-                    <input type="text" name="city" class="form-input" placeholder="City/State (e.g., California)" required>
+<body class="bg-[#1A2133] text-gray-200 antialiased">
+    <div class="container mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
+        
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl sm:text-5xl font-bold text-white mb-2">Company Finder</h1>
+            <p class="text-gray-400">Advanced Lead Generation & Enrichment Tool</p>
+        </header>
+
+        <!-- Form Pencarian -->
+        <div class="bg-[#2A3349] border border-[#3A4562] p-6 rounded-lg shadow-2xl mb-8">
+            <form id="scrape-form" action="/scrape" method="POST" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="industry" class="block text-sm font-medium text-gray-300 mb-1">Industry</label>
+                        <input
+                            type="text"
+                            id="industry"
+                            name="industry"
+                            placeholder="e.g., Software"
+                            required
+                            class="w-full bg-gray-700 text-white placeholder-gray-500 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        />
+                    </div>
+                    <div>
+                        <label for="country" class="block text-sm font-medium text-gray-300 mb-1">Country</label>
+                        <input
+                            type="text"
+                            id="country"
+                            name="country"
+                            placeholder="e.g., United States"
+                            required
+                            class="w-full bg-gray-700 text-white placeholder-gray-500 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        />
+                    </div>
+                    <div>
+                        <label for="city" class="block text-sm font-medium text-gray-300 mb-1">City / State</label>
+                        <input
+                            type="text"
+                            id="city"
+                            name="city"
+                            placeholder="e.g., California"
+                            required
+                            class="w-full bg-gray-700 text-white placeholder-gray-500 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        />
+                    </div>
                 </div>
-                <button type="submit" class="submit-btn">Find Leads</button>
+                <button 
+                    id="submit-button"
+                    type="submit" 
+                    class="w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-bold py-3 px-4 rounded-md transition duration-300 ease-in-out flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed">
+                    <span id="button-text">Find Companies</span>
+                </button>
             </form>
         </div>
 
-        <% if (typeof results !== 'undefined' && results !== null) { %>
-        <div class="card">
-            <h2>Results (<%= results.length %>)</h2>
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>Company</th>
-                        <th>Social</th>
-                        <th>Technologies</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% results.forEach(company => { %>
-                        <tr>
-                            <td>
-                                <div class="company-name"><%= company.name %></div>
-                                <a href="<%= company.website %>" target="_blank" class="website-link"><%= company.website.replace(/^https?:\/\//, '') %></a>
-                            </td>
-                            <td>
-                                <div class="social-links">
-                                    <% if (company.intelligence.socialMedia.linkedin) { %>
-                                        <a href="<%= company.intelligence.socialMedia.linkedin %>" target="_blank" class="social-link"><i class="fab fa-linkedin"></i></a>
-                                    <% } %>
-                                    <% if (company.intelligence.socialMedia.twitter) { %>
-                                        <a href="<%= company.intelligence.socialMedia.twitter %>" target="_blank" class="social-link"><i class="fab fa-twitter"></i></a>
-                                    <% } %>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="tech-tags">
-                                    <% if (company.intelligence.technologies) { %>
-                                        <% company.intelligence.technologies.slice(0, 3).forEach(tech => { %>
-                                            <span class="tech-tag"><%= tech %></span>
-                                        <% }) %>
-                                    <% } %>
-                                </div>
-                            </td>
-                        </tr>
-                    <% }) %>
-                </tbody>
-            </table>
+        <!-- Indikator Loading & Hasil -->
+        <div id="status-container">
+            <!-- Loading Indicator -->
+            <div id="loading-indicator" class="hidden text-center my-12">
+                <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-600 h-12 w-12 mx-auto mb-4"></div>
+                <p class="text-lg text-gray-300">Scraping in progress... This may take a moment.</p>
+                <p class="text-sm text-gray-500">Enriching data from company websites.</p>
+            </div>
+
+            <!-- Results Container -->
+            <div id="results-container">
+                <% if (typeof results !== 'undefined' && results) { %>
+                    <h2 class="text-2xl font-semibold text-white mb-4">Scraping Results</h2>
+                    <% if (results.length > 0) { %>
+                        <div class="overflow-x-auto bg-[#2A3349] border border-[#3A4562] rounded-lg shadow-2xl">
+                            <table class="w-full text-sm text-left text-gray-300">
+                                <thead class="text-xs text-gray-200 uppercase bg-gray-700/50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3">Company Name</th>
+                                        <th scope="col" class="px-6 py-3">Website</th>
+                                        <th scope="col" class="px-6 py-3">Social Media</th>
+                                        <th scope="col" class="px-6 py-3">Technologies</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% results.forEach(company => { %>
+                                        <tr class="border-b border-gray-700 hover:bg-gray-800/50">
+                                            <td class="px-6 py-4 font-medium text-white"><%= company.name %></td>
+                                            <td class="px-6 py-4">
+                                                <a href="<%= company.website %>" target="_blank" class="text-teal-400 hover:underline">Visit Site</a>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <% if (company.social && Object.keys(company.social).length > 0) { %>
+                                                    <% for (const [platform, link] of Object.entries(company.social)) { %>
+                                                        <a href="<%= link %>" target="_blank" class="capitalize text-blue-400 hover:underline"><%= platform %></a><br>
+                                                    <% } %>
+                                                <% } else { %>
+                                                    <span class="text-gray-500">N/A</span>
+                                                <% } %>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <% if (company.technologies && company.technologies.length > 0) { %>
+                                                    <div class="flex flex-wrap gap-1">
+                                                    <% company.technologies.forEach(tech => { %>
+                                                        <span class="bg-gray-600 text-gray-200 text-xs font-semibold px-2.5 py-0.5 rounded"><%= tech %></span>
+                                                    <% }) %>
+                                                    </div>
+                                                <% } else { %>
+                                                    <span class="text-gray-500">N/A</span>
+                                                <% } %>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <div class="bg-[#2A3349] border border-[#3A4562] text-center p-6 rounded-lg shadow-2xl">
+                            <p class="text-gray-400">No results found or an error occurred. Please try a different query.</p>
+                        </div>
+                    <% } %>
+                <% } %>
+            </div>
         </div>
-        <% } %>
     </div>
+
+    <script>
+        const form = document.getElementById('scrape-form');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const resultsContainer = document.getElementById('results-container');
+        const submitButton = document.getElementById('submit-button');
+        const buttonText = document.getElementById('button-text');
+
+        form.addEventListener('submit', () => {
+            resultsContainer.style.display = 'none';
+            loadingIndicator.classList.remove('hidden');
+            submitButton.disabled = true;
+            buttonText.innerText = 'Scraping...';
+        });
+    </script>
 </body>
 </html>
