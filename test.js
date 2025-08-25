@@ -1,21 +1,26 @@
-// Test dengan error handling yang lebih baik
-const { runScraper } = require('./services/scraperService');
+const { IntelligentScraper } = require('./services/scraperService.js');
 
-async function testScraperWithFallback() {
-    console.log('Starting test...');
-    
+async function main() {
+    console.log('--- MEMULAI PROSES PENGUJIAN ---');
+
+    // Buat instance dari scraper
+    const scraper = new IntelligentScraper({
+        headless: true, // Set 'false' untuk melihat browser saat menguji
+        deepAnalysis: false // Set 'false' untuk tes yang lebih cepat
+    });
+
     try {
-        const results = await runScraper('Marketing', 'US', 'California');
+        const results = await scraper.runScraper('SaaS', 'United States', 'California');
         
         if (results && results.length > 0) {
-            console.log('✅ Success! Results:');
+            console.log('✅ Tes Berhasil! Hasilnya:');
             console.log(JSON.stringify(results, null, 2));
         } else {
-            console.log('❌ No results returned');
+            console.log('❌ Tes selesai tetapi tidak ada hasil yang dikembalikan.');
         }
     } catch (error) {
-        console.error('Test error:', error);
+        console.error('❌ Tes Gagal dengan error:', error);
     }
 }
 
-testScraperWithFallback();
+main();

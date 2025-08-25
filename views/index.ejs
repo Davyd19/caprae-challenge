@@ -3,186 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caprae Enhanced Scraper</title>
+    <title>Caprae Lead Scraper - Advanced Lead Generation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
     <style>
         :root {
-            --background-color: #1a1a1a;
-            --surface-color: #2c2c2c;
-            --primary-color: #4a90e2;
-            --text-color: #e0e0e0;
-            --border-color: #444;
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --bg-dark: #111827;
+            --surface-dark: #1F2937;
+            --border-dark: #374151;
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --text-light: #F9FAFB;
+            --text-muted: #9CA3AF;
+            --font-family: 'Inter', sans-serif;
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: var(--font-family);
-            background-color: var(--background-color);
-            color: var(--text-color);
-            margin: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
             padding: 2rem;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
         }
         .container {
-            width: 100%;
             max-width: 900px;
+            margin: 0 auto;
         }
         .card {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            background-color: var(--surface-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 0.75rem;
             padding: 2rem;
             margin-bottom: 2rem;
         }
-        h1, h2 {
-            margin-top: 0;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.5rem;
-        }
-        form {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-        .full-width {
-            grid-column: 1 / -1;
-        }
-        label {
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-        input[type="text"] {
-            background-color: #333;
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 0.8em;
+        h1 { font-size: 2.25rem; font-weight: 700; text-align: center; margin-bottom: 0.5rem; }
+        .subtitle { color: var(--text-muted); text-align: center; margin-bottom: 2rem; font-size: 1.125rem; }
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem; }
+        .form-input {
+            width: 100%;
+            background-color: var(--border-dark);
+            color: var(--text-light);
+            border: 1px solid var(--border-dark);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
             font-size: 1rem;
         }
-        button {
-            background-color: var(--primary-color);
+        .submit-btn {
+            width: 100%;
+            background-color: var(--primary);
             color: white;
             border: none;
-            border-radius: 4px;
-            padding: 0.9em 1.2em;
-            cursor: pointer;
+            border-radius: 0.5rem;
+            padding: 0.875rem;
             font-size: 1rem;
             font-weight: 600;
+            cursor: pointer;
             transition: background-color 0.2s;
         }
-        button:hover { background-color: #357abd; }
+        .submit-btn:hover { background-color: var(--primary-hover); }
         .results-table { width: 100%; border-collapse: collapse; }
-        .results-table th, .results-table td {
-            padding: 0.8em 1em;
-            border: 1px solid var(--border-color);
-            text-align: left;
-        }
-        .results-table th { background-color: #333; }
-        a { color: var(--primary-color); text-decoration: none; }
-        .loader {
-            text-align: center;
-            padding: 2rem;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .results-table th, .results-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border-dark); }
+        .results-table th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
+        .company-name { font-weight: 600; }
+        .website-link { color: var(--primary); text-decoration: none; }
+        .social-links { display: flex; gap: 1rem; }
+        .social-link { color: var(--text-muted); font-size: 1.25rem; text-decoration: none; }
+        .tech-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .tech-tag { background-color: var(--border-dark); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <h1>Enhanced Lead Scraper</h1>
-            <form action="/scrape" method="POST" id="scrapeForm">
-                <div class="form-group">
-                    <label for="industry">Industry</label>
-                    <input type="text" id="industry" name="industry" placeholder="e.g., CRM" required>
+            <h1>Intelligent Lead Scraper</h1>
+            <p class="subtitle">Discover companies by industry and location.</p>
+            <form action="/scrape" method="POST">
+                <div class="form-grid">
+                    <input type="text" name="industry" class="form-input" placeholder="Industry (e.g., SaaS)" required>
+                    <input type="text" name="country" class="form-input" placeholder="Country (e.g., United States)" required>
+                    <input type="text" name="city" class="form-input" placeholder="City/State (e.g., California)" required>
                 </div>
-                <div class="form-group">
-                    <label for="country">Country</label>
-                    <input type="text" id="country" name="country" placeholder="e.g., United States" required>
-                </div>
-                <div class="form-group">
-                    <label for="city">City / State</label>
-                    <input type="text" id="city" name="city" placeholder="e.g., California" required>
-                </div>
-                <div class="form-group full-width">
-                    <button type="submit">Scrape Leads</button>
-                </div>
+                <button type="submit" class="submit-btn">Find Leads</button>
             </form>
         </div>
 
-        <% if (loading) { %>
-            <div class="card" id="results-card">
-                <h2>Scraping in Progress...</h2>
-                <div class="loader">
-                    <div class="spinner"></div>
-                    <p>Please wait while we gather the data. This may take a moment.</p>
-                </div>
-            </div>
-        <% } else if (typeof results !== 'undefined' && results !== null) { %>
-            <div class="card" id="results-card">
-                <h2>Scraping Results</h2>
-                <% if (results.length > 0) { %>
-                    <table class="results-table">
-                        <thead>
-                            <tr>
-                                <th>Company</th>
-                                <th>Website</th>
-                                <th>Location</th>
-                                <th>Social Media</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% results.forEach(company => { %>
-                                <tr>
-                                    <td><%= company.name %></td>
-                                    <td><a href="<%= company.website %>" target="_blank">Visit</a></td>
-                                    <td><%= company.location %></td>
-                                    <td>
-                                        <% for (const [platform, link] of Object.entries(company.social)) { %>
-                                            <a href="<%= link %>" target="_blank"><%= platform.charAt(0).toUpperCase() + platform.slice(1) %></a><br>
-                                        <% } %>
-                                    </td>
-                                </tr>
-                            <% }) %>
-                        </tbody>
-                    </table>
-                <% } else { %>
-                    <p>No results found for your query.</p>
-                <% } %>
-            </div>
+        <% if (typeof results !== 'undefined' && results !== null) { %>
+        <div class="card">
+            <h2>Results (<%= results.length %>)</h2>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Social</th>
+                        <th>Technologies</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% results.forEach(company => { %>
+                        <tr>
+                            <td>
+                                <div class="company-name"><%= company.name %></div>
+                                <a href="<%= company.website %>" target="_blank" class="website-link"><%= company.website.replace(/^https?:\/\//, '') %></a>
+                            </td>
+                            <td>
+                                <div class="social-links">
+                                    <% if (company.intelligence.socialMedia.linkedin) { %>
+                                        <a href="<%= company.intelligence.socialMedia.linkedin %>" target="_blank" class="social-link"><i class="fab fa-linkedin"></i></a>
+                                    <% } %>
+                                    <% if (company.intelligence.socialMedia.twitter) { %>
+                                        <a href="<%= company.intelligence.socialMedia.twitter %>" target="_blank" class="social-link"><i class="fab fa-twitter"></i></a>
+                                    <% } %>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="tech-tags">
+                                    <% if (company.intelligence.technologies) { %>
+                                        <% company.intelligence.technologies.slice(0, 3).forEach(tech => { %>
+                                            <span class="tech-tag"><%= tech %></span>
+                                        <% }) %>
+                                    <% } %>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
         <% } %>
     </div>
-    <script>
-        const form = document.getElementById('scrapeForm');
-        const resultsCard = document.getElementById('results-card');
-        form.addEventListener('submit', () => {
-            // Sembunyikan hasil lama dan tampilkan loader jika ada
-            if(resultsCard) {
-                resultsCard.style.display = 'none';
-            }
-            const loaderHtml = `
-            <div class="card" id="loading-card">
-                <h2>Scraping in Progress...</h2>
-                <div class="loader">
-                    <div class="spinner"></div>
-                    <p>Please wait while we gather the data. This may take a moment.</p>
-                </div>
-            </div>`;
-            form.insertAdjacentHTML('afterend', loaderHtml);
-        });
-    </script>
 </body>
 </html>
