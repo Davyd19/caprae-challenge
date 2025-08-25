@@ -12,15 +12,14 @@ app.get('/', (req, res) => {
 
 app.post('/scrape', async (req, res) => {
     try {
-        // Membersihkan (trim) input untuk menghilangkan spasi ekstra
         const industry = req.body.industry.trim();
         const country = req.body.country.trim();
         const city = req.body.city.trim();
         
         console.log(`Menerima permintaan untuk scrape: ${industry}, ${country}, ${city}`);
 
+        // Panggil fungsi scraper. Jeda tidak lagi diperlukan karena proses scraping asli memakan waktu.
         const data = await runScraper(industry, country, city);
-
         res.render('index', { results: data });
 
     } catch (error) {

@@ -3,39 +3,19 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
 const path = require('path');
 
-const LOGIN_EMAIL = "emailanda@contoh.com";
-const LOGIN_PASSWORD = "passwordanda"; 
+// ============================ MASUKKAN KREDENSIAL ANDA DI SINI ============================
+const LOGIN_EMAIL = "emailanda@contoh.com"; // Ganti dengan email login Anda
+const LOGIN_PASSWORD = "passwordanda";   // Ganti dengan password Anda
+// =========================================================================================
 
-async function handleAutocomplete(page, inputSelector, valueToType, optionToClick) {
-    console.log(`  -> Mengisi autocomplete [${inputSelector}] dengan mengetik "${valueToType}"`);
-    await page.waitForSelector(inputSelector, { visible: true, timeout: 20000 });
-    await page.evaluate(selector => document.querySelector(selector).value = '', inputSelector);
-    await page.type(inputSelector, valueToType, { delay: 150 });
-
-    const optionXPath = `//div[contains(@class, 'cursor-pointer') and contains(., '${optionToClick}')]`;
-    
-    try {
-        console.log(`  -> Menunggu opsi "${optionToClick}" muncul...`);
-        await page.waitForXPath(optionXPath, { visible: true, timeout: 10000 });
-        const [optionElement] = await page.$x(optionXPath);
-        if (optionElement) {
-            await optionElement.click();
-            console.log(`  -> Opsi "${optionToClick}" berhasil diklik.`);
-        } else {
-            throw new Error(`Opsi autocomplete untuk "${optionToClick}" tidak ditemukan.`);
-        }
-    } catch (e) {
-        console.warn(`  -> Peringatan: Tidak bisa mengklik opsi "${optionToClick}". Menekan Enter sebagai alternatif.`);
-        await page.keyboard.press('Enter');
-    }
-}
-
+/**
+ * Fungsi utama yang mencoba melakukan scraping sungguhan.
+ * Jika gagal di tahap mana pun, ia akan memanggil generateDummyData.
+ */
 async function runScraper(industry, country, city) {
     if (LOGIN_EMAIL === "emailanda@contoh.com" || LOGIN_PASSWORD === "passwordanda") {
-        console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        console.error("!!! HARAP UBAH LOGIN_EMAIL DAN LOGIN_PASSWORD DI scraperService.js !!!");
-        console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        return generateFallbackData(industry, country, city);
+        console.error("!!! PERINGATAN: Kredensial login belum diatur. Menggunakan data dummy. !!!");
+        return generateDummyData(industry, country, city);
     }
 
     let browser;
@@ -43,7 +23,7 @@ async function runScraper(industry, country, city) {
     const locationQuery = city ? `${city}, ${country}` : country;
     
     try {
-        console.log('🚀 Memulai scraper dengan mode stealth...');
+        console.log('🚀 Memulai scraping sungguhan dengan mode stealth...');
         browser = await puppeteer.launch({ 
             headless: "new",
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--start-maximized']
@@ -52,106 +32,139 @@ async function runScraper(industry, country, city) {
         page = await browser.newPage();
         await page.setViewport({ width: 1920, height: 1080 });
         
+        // --- 1. PROSES LOGIN ---
         const loginUrl = 'https://www.saasquatchleads.com/auth';
         console.log(`🌐 Navigasi ke halaman login: ${loginUrl}`);
         await page.goto(loginUrl, { waitUntil: 'networkidle2', timeout: 45000 });
 
         console.log('⏳ Menunggu form login muncul...');
-        const loginHeaderXPath = "//button[contains(., 'Sign In')]";
-        await page.waitForXPath(loginHeaderXPath, { timeout: 15000 });
+        await page.waitForSelector('#email', { timeout: 15000 });
         console.log('✅ Form login ditemukan.');
 
-        console.log('✍️ Memasukkan email dan password...');
-
-        const emailSelector = '#email';      
-        const passwordSelector = '#password'; 
-        const loginButtonSelector = 'button[type="submit"]';
-
-        await page.waitForSelector(emailSelector);
-        await page.type(emailSelector, LOGIN_EMAIL, { delay: 100 });
-        await page.type(passwordSelector, LOGIN_PASSWORD, { delay: 100 });
+        console.log('✍️ Memasukkan kredensial...');
+        await page.type('#email', LOGIN_EMAIL, { delay: 100 });
+        await page.type('#password', LOGIN_PASSWORD, { delay: 100 });
 
         console.log('🖱️ Mengklik tombol login...');
         await Promise.all([
-            page.click(loginButtonSelector),
+            page.click('button[type="submit"]'),
             page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 })
         ]);
         console.log('✅ Login berhasil!');
-        
-        const scraperUrl = 'https://www.saasquatchleads.com/scraper';
-        console.log(`🌐 Navigasi ke halaman scraper: ${scraperUrl}`);
-        await page.goto(scraperUrl, { waitUntil: 'networkidle2', timeout: 30000 });
 
+        // --- 2. NAVIGASI KE HALAMAN SCRAPER ---
+        const scraperButtonSelector = 'a[href="/scraper"]';
+        console.log(`🖱️ Menunggu dan mengklik tombol Scraper di navigasi...`);
+        await page.waitForSelector(scraperButtonSelector, { visible: true, timeout: 15000 });
+        await page.click(scraperButtonSelector);
+        
         console.log('⏳ Menunggu form pencarian muncul...');
         await page.waitForXPath("//div[contains(., 'Search Criteria')]", { timeout: 20000 });
         console.log('✅ Form berhasil dimuat!');
 
+        // --- 3. MENGISI FORM DAN SCRAPE ---
         const industrySelector = '#industry';
         const locationSelector = '#location';
         const submitButtonXPath = "//button[contains(., 'Find Companies')]";
 
-        console.log('✍️ Memulai pengisian form dinamis...');
+        console.log('✍️ Mengisi form pencarian...');
         await handleAutocomplete(page, industrySelector, industry, industry); 
         await handleAutocomplete(page, locationSelector, city, city);
         
-        console.log('✅ Form berhasil diisi.');
-
         const [submitButton] = await page.$x(submitButtonXPath);
-        if (!submitButton) throw new Error('Tombol "Find Companies" tidak ditemukan.');
-
-        console.log('🔍 Mensubmit form pencarian...');
         await submitButton.click();
+        console.log('👍 Form berhasil disubmit. Menunggu hasil...');
         
-        console.log('👍 Form berhasil disubmit. Menunggu hasil muncul...');
-        
-        const companyCardSelector = 'div.rounded-lg.border'; 
+        const companyCardSelector = 'div.rounded-lg.border'; // Sesuaikan jika perlu
         await page.waitForSelector(companyCardSelector, { timeout: 25000 });
         
         const companies = await scrapeInitialCompanyList(page, companyCardSelector);
-        console.log(`🏢 Berhasil menemukan ${companies.length} perusahaan.`);
-        
-        if (companies.length === 0) return generateFallbackData(industry, country, city);
+        if (companies.length === 0) throw new Error("Tidak ada perusahaan ditemukan dari scraping.");
 
+        console.log(`🔄 Memulai enrichment untuk ${companies.length} perusahaan...`);
         const enrichedData = await enrichCompanies(browser, companies.slice(0, 10));
         return enrichedData;
         
     } catch (error) {
-        console.error("❌ Error fatal selama scraping:", error.message);
+        console.error("❌ Scraping sungguhan gagal:", error.message);
+        console.log("🔄 Beralih ke generator data dummy sebagai fallback...");
         if (page) {
             const screenshotPath = path.join(__dirname, `../error_screenshot_${Date.now()}.png`);
             await page.screenshot({ path: screenshotPath, fullPage: true });
             console.log(`📸 Screenshot error disimpan di: ${screenshotPath}`);
         }
-        return generateFallbackData(industry, country, city);
+        // Inilah bagian fallback-nya
+        return generateDummyData(industry, country, city);
     } finally {
-        if (browser) await browser.close();
-        console.log('🔒 Browser ditutup');
+        if (browser) {
+            await browser.close();
+            console.log('🔒 Browser ditutup');
+        }
     }
 }
-async function scrapeInitialCompanyList(page, selector) {
-    return page.$$eval(selector, cards => {
-        return cards.map(card => {
-            const name = card.querySelector('h3, h2, div[class*="font-bold"]')?.innerText.trim(); 
-            const websiteElement = card.querySelector('a[href*="http"]');
-            const website = websiteElement ? websiteElement.href : null;
-            return { name, website };
-        }).filter(c => c.name && c.website);
-    });
+
+/**
+ * Menghasilkan data perusahaan dummy yang kaya dan realistis untuk demo.
+ */
+function generateDummyData(industry, country, city) {
+    console.log(`📊 Menghasilkan data dummy untuk: ${industry}, ${city}, ${country}`);
+    const companyTemplates = [
+        { baseName: 'Innovate Solutions', technologies: ['React', 'Node.js', 'AWS'], employeeCount: '50-100', foundedYear: 2018 },
+        { baseName: 'Digital Dynamics', technologies: ['Vue.js', 'Firebase', 'Google Cloud'], employeeCount: '20-50', foundedYear: 2020 },
+        { baseName: 'Quantum Leap', technologies: ['Angular', 'Java', 'Azure'], employeeCount: '100-250', foundedYear: 2015 },
+        { baseName: 'Synergy Systems', technologies: ['WordPress', 'PHP', 'MySQL'], employeeCount: '10-20', foundedYear: 2019 },
+    ];
+
+    return companyTemplates.map((template, i) => ({
+        id: `comp-${i}`,
+        name: `[DUMMY] ${template.baseName} ${industry}`,
+        website: `https://example.com/${template.baseName.toLowerCase().replace(/\s/g, '')}`,
+        location: `${city}, ${country}`,
+        social: {
+            linkedin: `https://linkedin.com/company/example`,
+            twitter: `https://twitter.com/example`
+        },
+        technologies: template.technologies,
+        description: `A leading dummy company in the ${industry} sector, specializing in innovative solutions. Based in ${city}.`,
+        employeeCount: template.employeeCount,
+        foundedYear: template.foundedYear,
+        contactEmail: `contact@example.com`,
+        contactPhone: `+1 (555) 123-456${i}`
+    }));
 }
+
+async function handleAutocomplete(page, inputSelector, valueToType, optionToClick) {
+    await page.waitForSelector(inputSelector, { visible: true, timeout: 20000 });
+    await page.evaluate(selector => document.querySelector(selector).value = '', inputSelector);
+    await page.type(inputSelector, valueToType, { delay: 150 });
+    const optionXPath = `//div[contains(@class, 'cursor-pointer') and contains(., '${optionToClick}')]`;
+    try {
+        await page.waitForXPath(optionXPath, { visible: true, timeout: 10000 });
+        const [optionElement] = await page.$x(optionXPath);
+        if (optionElement) await optionElement.click();
+    } catch (e) {
+        await page.keyboard.press('Enter');
+    }
+}
+
+async function scrapeInitialCompanyList(page, selector) {
+    return page.$$eval(selector, cards => cards.map(card => ({
+        name: card.querySelector('h3, h2, div[class*="font-bold"]')?.innerText.trim(),
+        website: card.querySelector('a[href*="http"]')?.href
+    })).filter(c => c.name && c.website));
+}
+
 async function enrichCompanies(browser, companies) {
     const enrichedData = [];
     for (const company of companies) {
-        if (!company.website) {
-            enrichedData.push({ ...company, location: 'N/A', social: {}, technologies: ['N/A'] });
-            continue;
-        }
         let companyPage;
         try {
+            if (!company.website) continue;
             companyPage = await browser.newPage();
             await companyPage.goto(company.website, { waitUntil: 'domcontentloaded', timeout: 20000 });
             const enrichment = await getEnrichmentData(companyPage);
             enrichedData.push({ ...company, ...enrichment });
-        } catch (enrichError) {
+        } catch (e) {
             enrichedData.push({ ...company, location: 'N/A', social: {}, technologies: ['Gagal diakses'] });
         } finally {
             if (companyPage) await companyPage.close();
@@ -159,6 +172,7 @@ async function enrichCompanies(browser, companies) {
     }
     return enrichedData;
 }
+
 async function getEnrichmentData(page) {
     return page.evaluate(() => {
         const data = { location: 'N/A', social: {}, technologies: [] };
@@ -183,15 +197,6 @@ async function getEnrichmentData(page) {
         data.technologies = [...new Set(data.technologies)];
         return data;
     });
-}
-function generateFallbackData(industry, country, city) {
-    return [{
-        name: `[FALLBACK] Demo ${industry} Corp`,
-        website: 'https://example.com',
-        location: `${city}, ${country}`,
-        social: { linkedin: 'https://linkedin.com/company/example' },
-        technologies: ['React', 'Node.js'],
-    }];
 }
 
 module.exports = { runScraper };

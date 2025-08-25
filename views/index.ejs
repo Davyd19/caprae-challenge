@@ -4,88 +4,57 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Caprae Lead Scraper</title>
-    <!-- Memuat Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Animasi untuk spinner */
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .loader {
-            border-top-color: #2dd4bf; /* Teal color from the site's gradient */
+            border-top-color: #2dd4bf;
             animation: spin 1s linear infinite;
         }
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-container { transition: transform 0.3s ease, opacity 0.3s ease; }
     </style>
 </head>
 <body class="bg-[#1A2133] text-gray-200 antialiased">
     <div class="container mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
         
-        <!-- Header -->
         <header class="text-center mb-10">
             <h1 class="text-4xl sm:text-5xl font-bold text-white mb-2">Company Finder</h1>
             <p class="text-gray-400">Advanced Lead Generation & Enrichment Tool</p>
         </header>
 
-        <!-- Form Pencarian -->
         <div class="bg-[#2A3349] border border-[#3A4562] p-6 rounded-lg shadow-2xl mb-8">
             <form id="scrape-form" action="/scrape" method="POST" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label for="industry" class="block text-sm font-medium text-gray-300 mb-1">Industry</label>
-                        <input
-                            type="text"
-                            id="industry"
-                            name="industry"
-                            placeholder="e.g., Software"
-                            required
-                            class="w-full bg-gray-700 text-white placeholder-gray-500 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        />
+                        <input type="text" id="industry" name="industry" placeholder="e.g., Software" required class="w-full bg-gray-700 text-white placeholder-gray-500 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-teal-500"/>
                     </div>
                     <div>
                         <label for="country" class="block text-sm font-medium text-gray-300 mb-1">Country</label>
-                        <input
-                            type="text"
-                            id="country"
-                            name="country"
-                            placeholder="e.g., United States"
-                            required
-                            class="w-full bg-gray-700 text-white placeholder-gray-500 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        />
+                        <input type="text" id="country" name="country" placeholder="e.g., United States" required class="w-full bg-gray-700 text-white placeholder-gray-500 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-teal-500"/>
                     </div>
                     <div>
                         <label for="city" class="block text-sm font-medium text-gray-300 mb-1">City / State</label>
-                        <input
-                            type="text"
-                            id="city"
-                            name="city"
-                            placeholder="e.g., California"
-                            required
-                            class="w-full bg-gray-700 text-white placeholder-gray-500 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        />
+                        <input type="text" id="city" name="city" placeholder="e.g., California" required class="w-full bg-gray-700 text-white placeholder-gray-500 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-teal-500"/>
                     </div>
                 </div>
-                <button 
-                    id="submit-button"
-                    type="submit" 
-                    class="w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-bold py-3 px-4 rounded-md transition duration-300 ease-in-out flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed">
+                <button id="submit-button" type="submit" class="w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-bold py-3 px-4 rounded-md transition duration-300 ease-in-out flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed">
                     <span id="button-text">Find Companies</span>
                 </button>
             </form>
         </div>
 
-        <!-- Indikator Loading & Hasil -->
         <div id="status-container">
-            <!-- Loading Indicator -->
             <div id="loading-indicator" class="hidden text-center my-12">
                 <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-600 h-12 w-12 mx-auto mb-4"></div>
-                <p class="text-lg text-gray-300">Scraping in progress... This may take a moment.</p>
-                <p class="text-sm text-gray-500">Enriching data from company websites.</p>
+                <p class="text-lg text-gray-300">Scraping in progress...</p>
+                <p class="text-sm text-gray-500">This may take a moment. If it fails, dummy data will be shown.</p>
             </div>
 
-            <!-- Results Container -->
             <div id="results-container">
                 <% if (typeof results !== 'undefined' && results) { %>
-                    <h2 class="text-2xl font-semibold text-white mb-4">Scraping Results</h2>
+                    <h2 class="text-2xl font-semibold text-white mb-4">Generated Results</h2>
                     <% if (results.length > 0) { %>
                         <div class="overflow-x-auto bg-[#2A3349] border border-[#3A4562] rounded-lg shadow-2xl">
                             <table class="w-full text-sm text-left text-gray-300">
@@ -93,36 +62,22 @@
                                     <tr>
                                         <th scope="col" class="px-6 py-3">Company Name</th>
                                         <th scope="col" class="px-6 py-3">Website</th>
-                                        <th scope="col" class="px-6 py-3">Social Media</th>
+                                        <th scope="col" class="px-6 py-3">Location</th>
                                         <th scope="col" class="px-6 py-3">Technologies</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <% results.forEach(company => { %>
-                                        <tr class="border-b border-gray-700 hover:bg-gray-800/50">
+                                        <tr class="border-b border-gray-700 hover:bg-gray-800/50 cursor-pointer" onclick='openModal(<%- JSON.stringify(company) %>)'>
                                             <td class="px-6 py-4 font-medium text-white"><%= company.name %></td>
+                                            <td class="px-6 py-4"><a href="<%= company.website %>" target="_blank" class="text-teal-400 hover:underline" onclick="event.stopPropagation()">Visit Site</a></td>
+                                            <td class="px-6 py-4"><%= company.location %></td>
                                             <td class="px-6 py-4">
-                                                <a href="<%= company.website %>" target="_blank" class="text-teal-400 hover:underline">Visit Site</a>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <% if (company.social && Object.keys(company.social).length > 0) { %>
-                                                    <% for (const [platform, link] of Object.entries(company.social)) { %>
-                                                        <a href="<%= link %>" target="_blank" class="capitalize text-blue-400 hover:underline"><%= platform %></a><br>
-                                                    <% } %>
-                                                <% } else { %>
-                                                    <span class="text-gray-500">N/A</span>
-                                                <% } %>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <% if (company.technologies && company.technologies.length > 0) { %>
-                                                    <div class="flex flex-wrap gap-1">
-                                                    <% company.technologies.forEach(tech => { %>
-                                                        <span class="bg-gray-600 text-gray-200 text-xs font-semibold px-2.5 py-0.5 rounded"><%= tech %></span>
-                                                    <% }) %>
-                                                    </div>
-                                                <% } else { %>
-                                                    <span class="text-gray-500">N/A</span>
-                                                <% } %>
+                                                <div class="flex flex-wrap gap-1">
+                                                <% (company.technologies || []).forEach(tech => { %>
+                                                    <span class="bg-gray-600 text-gray-200 text-xs font-semibold px-2.5 py-0.5 rounded"><%= tech %></span>
+                                                <% }) %>
+                                                </div>
                                             </td>
                                         </tr>
                                     <% }) %>
@@ -130,11 +85,30 @@
                             </table>
                         </div>
                     <% } else { %>
-                        <div class="bg-[#2A3349] border border-[#3A4562] text-center p-6 rounded-lg shadow-2xl">
-                            <p class="text-gray-400">No results found or an error occurred. Please try a different query.</p>
-                        </div>
+                        <p class="text-center text-gray-400">No results to display.</p>
                     <% } %>
                 <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Structure -->
+    <div id="company-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden opacity-0" onclick="closeModal()">
+        <div class="modal-container bg-[#2A3349] border border-[#3A4562] rounded-lg shadow-2xl w-full max-w-2xl mx-auto transform -translate-y-10 opacity-0" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center p-5 border-b border-gray-700">
+                <h3 id="modal-name" class="text-2xl font-semibold text-white"></h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p id="modal-description" class="text-gray-300"></p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div class="space-y-3" id="modal-details-col1"></div>
+                    <div class="space-y-3" id="modal-details-col2"></div>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2 text-white">Technologies Used:</h4>
+                    <div id="modal-techs" class="flex flex-wrap gap-2"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -145,12 +119,52 @@
         const resultsContainer = document.getElementById('results-container');
         const submitButton = document.getElementById('submit-button');
         const buttonText = document.getElementById('button-text');
+        const modal = document.getElementById('company-modal');
+        const modalContainer = modal.querySelector('.modal-container');
 
         form.addEventListener('submit', () => {
             resultsContainer.style.display = 'none';
             loadingIndicator.classList.remove('hidden');
             submitButton.disabled = true;
             buttonText.innerText = 'Scraping...';
+        });
+
+        function openModal(companyData) {
+            document.getElementById('modal-name').innerText = companyData.name;
+            document.getElementById('modal-description').innerText = companyData.description || 'No description available.';
+            
+            const col1 = document.getElementById('modal-details-col1');
+            const col2 = document.getElementById('modal-details-col2');
+            col1.innerHTML = `
+                <div><strong>Location:</strong> ${companyData.location || 'N/A'}</div>
+                <div><strong>Founded:</strong> ${companyData.foundedYear || 'N/A'}</div>
+                <div><strong>Employees:</strong> ${companyData.employeeCount || 'N/A'}</div>
+            `;
+            col2.innerHTML = `
+                <div><strong>Email:</strong> <a href="mailto:${companyData.contactEmail}" class="text-teal-400 hover:underline">${companyData.contactEmail || 'N/A'}</a></div>
+                <div><strong>Phone:</strong> ${companyData.contactPhone || 'N/A'}</div>
+                <div><strong>Social:</strong> ${Object.entries(companyData.social || {}).map(([p, l]) => `<a href="${l}" target="_blank" class="capitalize text-blue-400 hover:underline">${p}</a>`).join(', ') || 'N/A'}</div>
+            `;
+            
+            document.getElementById('modal-techs').innerHTML = (companyData.technologies || []).map(tech => 
+                `<span class="bg-gray-600 text-gray-200 text-xs font-semibold px-2.5 py-0.5 rounded">${tech}</span>`
+            ).join('');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContainer.classList.remove('-translate-y-10', 'opacity-0');
+            }, 10);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modalContainer.classList.add('-translate-y-10', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
         });
     </script>
 </body>
