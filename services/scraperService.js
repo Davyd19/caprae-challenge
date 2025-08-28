@@ -4,8 +4,8 @@ puppeteer.use(StealthPlugin());
 const path = require('path');
 
 // ============================ MASUKKAN KREDENSIAL ANDA DI SINI ============================
-const LOGIN_EMAIL = "emailanda@contoh.com"; // Ganti dengan email login Anda
-const LOGIN_PASSWORD = "passwordanda";   // Ganti dengan password Anda
+const LOGIN_EMAIL = "davyd@gmail.com"; // Ganti dengan email login Anda
+const LOGIN_PASSWORD = "password";   // Ganti dengan password Anda
 // =========================================================================================
 
 /**
