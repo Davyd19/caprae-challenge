@@ -1,202 +1,138 @@
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
-const path = require('path');
-
-// ============================ MASUKKAN KREDENSIAL ANDA DI SINI ============================
-const LOGIN_EMAIL = "davyd@gmail.com"; // Ganti dengan email login Anda
-const LOGIN_PASSWORD = "password";   // Ganti dengan password Anda
-// =========================================================================================
 
 /**
- * Fungsi utama yang mencoba melakukan scraping sungguhan.
- * Jika gagal di tahap mana pun, ia akan memanggil generateDummyData.
+ * Menerima array judul buku, misal: ["Laskar Pelangi", "Bumi Manusia"]
  */
-async function runScraper(industry, country, city) {
-    if (LOGIN_EMAIL === "emailanda@contoh.com" || LOGIN_PASSWORD === "passwordanda") {
-        console.error("!!! PERINGATAN: Kredensial login belum diatur. Menggunakan data dummy. !!!");
-        return generateDummyData(industry, country, city);
-    }
-
+async function runScraper(keywords) {
     let browser;
-    let page;
-    const locationQuery = city ? `${city}, ${country}` : country;
-    
+    const allScrapedData = [];
+
     try {
-        console.log('🚀 Memulai scraping sungguhan dengan mode stealth...');
+        console.log(`🚀 Memulai Batch Scraping untuk ${keywords.length} kata kunci.`);
+        
         browser = await puppeteer.launch({ 
-            headless: "new",
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--start-maximized']
+            headless: false, // Set ke 'new' untuk background process
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--start-maximized'],
+            defaultViewport: null
         });
         
-        page = await browser.newPage();
-        await page.setViewport({ width: 1920, height: 1080 });
-        
-        // --- 1. PROSES LOGIN ---
-        const loginUrl = 'https://www.saasquatchleads.com/auth';
-        console.log(`🌐 Navigasi ke halaman login: ${loginUrl}`);
-        await page.goto(loginUrl, { waitUntil: 'networkidle2', timeout: 45000 });
+        const page = await browser.newPage();
+        const targetUrl = 'http://192.168.35.252/opac/';
 
-        console.log('⏳ Menunggu form login muncul...');
-        await page.waitForSelector('#email', { timeout: 15000 });
-        console.log('✅ Form login ditemukan.');
+        // Loop untuk setiap kata kunci dari CSV
+        for (const [index, keyword] of keywords.entries()) {
+            // Trim whitespace dan lewati jika kosong
+            const cleanKeyword = keyword ? keyword.trim() : '';
+            if (!cleanKeyword) continue;
 
-        console.log('✍️ Memasukkan kredensial...');
-        await page.type('#email', LOGIN_EMAIL, { delay: 100 });
-        await page.type('#password', LOGIN_PASSWORD, { delay: 100 });
+            console.log(`\n[${index + 1}/${keywords.length}] 🔍 Memproses: "${cleanKeyword}"`);
 
-        console.log('🖱️ Mengklik tombol login...');
-        await Promise.all([
-            page.click('button[type="submit"]'),
-            page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 })
-        ]);
-        console.log('✅ Login berhasil!');
+            try {
+                // 1. KE HALAMAN UTAMA & CARI
+                await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-        // --- 2. NAVIGASI KE HALAMAN SCRAPER ---
-        const scraperButtonSelector = 'a[href="/scraper"]';
-        console.log(`🖱️ Menunggu dan mengklik tombol Scraper di navigasi...`);
-        await page.waitForSelector(scraperButtonSelector, { visible: true, timeout: 15000 });
-        await page.click(scraperButtonSelector);
-        
-        console.log('⏳ Menunggu form pencarian muncul...');
-        await page.waitForXPath("//div[contains(., 'Search Criteria')]", { timeout: 20000 });
-        console.log('✅ Form berhasil dimuat!');
+                const searchInputSelector = '#KataKunci'; 
+                const searchButtonSelector = 'input[type="submit"].btn-success';
 
-        // --- 3. MENGISI FORM DAN SCRAPE ---
-        const industrySelector = '#industry';
-        const locationSelector = '#location';
-        const submitButtonXPath = "//button[contains(., 'Find Companies')]";
+                await page.waitForSelector(searchInputSelector, { timeout: 5000 });
+                // Reset value input
+                await page.evaluate((sel) => { document.querySelector(sel).value = '' }, searchInputSelector);
+                
+                await page.type(searchInputSelector, cleanKeyword);
+                
+                await Promise.all([
+                    page.click(searchButtonSelector),
+                    page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 })
+                ]);
 
-        console.log('✍️ Mengisi form pencarian...');
-        await handleAutocomplete(page, industrySelector, industry, industry); 
-        await handleAutocomplete(page, locationSelector, city, city);
-        
-        const [submitButton] = await page.$x(submitButtonXPath);
-        await submitButton.click();
-        console.log('👍 Form berhasil disubmit. Menunggu hasil...');
-        
-        const companyCardSelector = 'div.rounded-lg.border'; // Sesuaikan jika perlu
-        await page.waitForSelector(companyCardSelector, { timeout: 25000 });
-        
-        const companies = await scrapeInitialCompanyList(page, companyCardSelector);
-        if (companies.length === 0) throw new Error("Tidak ada perusahaan ditemukan dari scraping.");
+                // 2. AMBIL HASIL PENCARIAN (LINK BUKU)
+                const detailLinks = await page.evaluate(() => {
+                    return Array.from(document.querySelectorAll('a'))
+                        .filter(a => a.href.includes('detail-opac') || a.href.includes('?id='))
+                        .filter(a => !a.href.includes('download') && !a.href.includes('javascript'))
+                        .map(a => a.href);
+                });
 
-        console.log(`🔄 Memulai enrichment untuk ${companies.length} perusahaan...`);
-        const enrichedData = await enrichCompanies(browser, companies.slice(0, 10));
-        return enrichedData;
-        
-    } catch (error) {
-        console.error("❌ Scraping sungguhan gagal:", error.message);
-        console.log("🔄 Beralih ke generator data dummy sebagai fallback...");
-        if (page) {
-            const screenshotPath = path.join(__dirname, `../error_screenshot_${Date.now()}.png`);
-            await page.screenshot({ path: screenshotPath, fullPage: true });
-            console.log(`📸 Screenshot error disimpan di: ${screenshotPath}`);
-        }
-        // Inilah bagian fallback-nya
-        return generateDummyData(industry, country, city);
-    } finally {
-        if (browser) {
-            await browser.close();
-            console.log('🔒 Browser ditutup');
-        }
-    }
-}
-
-/**
- * Menghasilkan data perusahaan dummy yang kaya dan realistis untuk demo.
- */
-function generateDummyData(industry, country, city) {
-    console.log(`📊 Menghasilkan data dummy untuk: ${industry}, ${city}, ${country}`);
-    const companyTemplates = [
-        { baseName: 'Innovate Solutions', technologies: ['React', 'Node.js', 'AWS'], employeeCount: '50-100', foundedYear: 2018 },
-        { baseName: 'Digital Dynamics', technologies: ['Vue.js', 'Firebase', 'Google Cloud'], employeeCount: '20-50', foundedYear: 2020 },
-        { baseName: 'Quantum Leap', technologies: ['Angular', 'Java', 'Azure'], employeeCount: '100-250', foundedYear: 2015 },
-        { baseName: 'Synergy Systems', technologies: ['WordPress', 'PHP', 'MySQL'], employeeCount: '10-20', foundedYear: 2019 },
-    ];
-
-    return companyTemplates.map((template, i) => ({
-        id: `comp-${i}`,
-        name: `[DUMMY] ${template.baseName} ${industry}`,
-        website: `https://example.com/${template.baseName.toLowerCase().replace(/\s/g, '')}`,
-        location: `${city}, ${country}`,
-        social: {
-            linkedin: `https://linkedin.com/company/example`,
-            twitter: `https://twitter.com/example`
-        },
-        technologies: template.technologies,
-        description: `A leading dummy company in the ${industry} sector, specializing in innovative solutions. Based in ${city}.`,
-        employeeCount: template.employeeCount,
-        foundedYear: template.foundedYear,
-        contactEmail: `contact@example.com`,
-        contactPhone: `+1 (555) 123-456${i}`
-    }));
-}
-
-async function handleAutocomplete(page, inputSelector, valueToType, optionToClick) {
-    await page.waitForSelector(inputSelector, { visible: true, timeout: 20000 });
-    await page.evaluate(selector => document.querySelector(selector).value = '', inputSelector);
-    await page.type(inputSelector, valueToType, { delay: 150 });
-    const optionXPath = `//div[contains(@class, 'cursor-pointer') and contains(., '${optionToClick}')]`;
-    try {
-        await page.waitForXPath(optionXPath, { visible: true, timeout: 10000 });
-        const [optionElement] = await page.$x(optionXPath);
-        if (optionElement) await optionElement.click();
-    } catch (e) {
-        await page.keyboard.press('Enter');
-    }
-}
-
-async function scrapeInitialCompanyList(page, selector) {
-    return page.$$eval(selector, cards => cards.map(card => ({
-        name: card.querySelector('h3, h2, div[class*="font-bold"]')?.innerText.trim(),
-        website: card.querySelector('a[href*="http"]')?.href
-    })).filter(c => c.name && c.website));
-}
-
-async function enrichCompanies(browser, companies) {
-    const enrichedData = [];
-    for (const company of companies) {
-        let companyPage;
-        try {
-            if (!company.website) continue;
-            companyPage = await browser.newPage();
-            await companyPage.goto(company.website, { waitUntil: 'domcontentloaded', timeout: 20000 });
-            const enrichment = await getEnrichmentData(companyPage);
-            enrichedData.push({ ...company, ...enrichment });
-        } catch (e) {
-            enrichedData.push({ ...company, location: 'N/A', social: {}, technologies: ['Gagal diakses'] });
-        } finally {
-            if (companyPage) await companyPage.close();
-        }
-    }
-    return enrichedData;
-}
-
-async function getEnrichmentData(page) {
-    return page.evaluate(() => {
-        const data = { location: 'N/A', social: {}, technologies: [] };
-        const socialPlatforms = {
-            linkedin: /linkedin\.com\/(company|in)\/[\w-]+/,
-            twitter: /twitter\.com\/[\w_]+/,
-            facebook: /facebook\.com\/[\w.-]+/
-        };
-        document.querySelectorAll('a[href]').forEach(link => {
-            for (const [platform, regex] of Object.entries(socialPlatforms)) {
-                if (regex.test(link.href) && !data.social[platform]) {
-                    data.social[platform] = link.href;
+                const uniqueLinks = [...new Set(detailLinks)].slice(0, 3); // Ambil max 3 buku per judul agar cepat
+                
+                if (uniqueLinks.length === 0) {
+                    console.log(`⚠️ Tidak ditemukan buku untuk: "${cleanKeyword}"`);
+                    // Push data kosong sebagai tanda
+                    allScrapedData.push({
+                        JudulPencarian: cleanKeyword,
+                        Status: 'Tidak Ditemukan',
+                        Judul: '-', NoPanggil: '-'
+                    });
+                    continue;
                 }
+
+                // 3. BUKA DETAIL & SCRAPE
+                for (const link of uniqueLinks) {
+                    // Buka tab baru untuk detail agar halaman pencarian utama tidak hilang/refresh
+                    const detailPage = await browser.newPage();
+                    try {
+                        await detailPage.goto(link, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+                        const bookData = await detailPage.evaluate((currentKeyword) => {
+                            const result = { JudulPencarian: currentKeyword, Status: 'Ditemukan' };
+
+                            const getTableValue = (labelSearch) => {
+                                const rows = document.querySelectorAll('.table-striped tbody tr');
+                                for (const row of rows) {
+                                    const cells = row.querySelectorAll('td');
+                                    if (cells.length >= 2) {
+                                        const labelText = cells[0].innerText.trim().toLowerCase();
+                                        if (labelText.includes(labelSearch.toLowerCase())) return cells[1].innerText.trim();
+                                    }
+                                }
+                                return '-';
+                            };
+
+                            result.Judul = getTableValue('Judul');
+                            result.Pengarang = getTableValue('Pengarang');
+                            result.Penerbitan = getTableValue('Penerbitan');
+                            result.DeskripsiFisik = getTableValue('Deskripsi Fisik');
+                            result.Konten = getTableValue('Konten');
+                            result.Media = getTableValue('Media');
+                            result.PenyimpanMedia = getTableValue('Penyimpan Media');
+                            result.ISBN = getTableValue('ISBN');
+                            result.Subjek = getTableValue('Subjek');
+                            result.Bahasa = getTableValue('Bahasa');
+                            result.TargetPembaca = getTableValue('Target Pembaca');
+
+                            const callNumberCell = document.querySelector('#detail tbody tr td:nth-child(2)');
+                            result.NoPanggil = callNumberCell ? callNumberCell.innerText.trim() : '-';
+
+                            return result;
+                        }, cleanKeyword);
+
+                        if (bookData.Judul !== '-') {
+                            allScrapedData.push(bookData);
+                            console.log(`✅ Scraped: ${bookData.Judul.substring(0, 30)}...`);
+                        }
+
+                    } catch (e) {
+                        console.error(`❌ Error detail page: ${e.message}`);
+                    } finally {
+                        await detailPage.close();
+                    }
+                }
+
+            } catch (err) {
+                console.error(`❌ Error processing keyword "${cleanKeyword}": ${err.message}`);
             }
-        });
-        const scripts = Array.from(document.scripts).map(s => s.src).join(' ');
-        if (window.React || document.querySelector('[data-reactroot]') || window.__NEXT_DATA__) data.technologies.push('React/Next.js');
-        if (window.Vue) data.technologies.push('Vue.js');
-        if (scripts.includes('wp-content')) data.technologies.push('WordPress');
-        if (window.Shopify) data.technologies.push('Shopify');
-        if(data.technologies.length === 0) data.technologies.push('Unknown');
-        data.technologies = [...new Set(data.technologies)];
-        return data;
-    });
+        }
+
+        return allScrapedData;
+
+    } catch (error) {
+        console.error("❌ Fatal Error:", error);
+        return [];
+    } finally {
+        if (browser) await browser.close();
+    }
 }
 
 module.exports = { runScraper };
