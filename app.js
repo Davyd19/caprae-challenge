@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
-const csv = require('csv-parser');
+const xlsx = require('xlsx'); // Library untuk Excel
 const { runScraper } = require('./services/scraperService.js'); 
 
 const app = express();
@@ -18,40 +18,39 @@ app.get('/', (req, res) => {
     res.render('index', { results: undefined }); 
 });
 
-app.post('/scrape-csv', upload.single('csvFile'), (req, res) => {
+// Route baru untuk menangani file Excel
+app.post('/scrape-excel', upload.single('excelFile'), async (req, res) => {
     if (!req.file) {
-        return res.send('Mohon upload file CSV.');
+        return res.send('Mohon upload file Excel (.xlsx / .xls).');
     }
 
-    const keywords = [];
+    try {
+        // 1. Baca File Excel
+        const workbook = xlsx.readFile(req.file.path);
+        const sheetName = workbook.SheetNames[0]; // Ambil sheet pertama
+        const rawData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-    // Baca file CSV
-    fs.createReadStream(req.file.path)
-        .pipe(csv())
-        .on('data', (row) => {
-            // Asumsi kolom pertama adalah judul, atau cari kolom bernama 'Judul'
-            // Jika CSV tidak punya header, 'row' mungkin array atau object dengan key index
-            const judul = row['Judul'] || Object.values(row)[0];
-            if (judul) keywords.push(judul);
-        })
-        .on('end', async () => {
-            // Hapus file temp setelah dibaca
+        console.log(`📥 Menerima ${rawData.length} baris data dari Excel.`);
+
+        if (rawData.length > 0) {
+            // 2. Jalankan Scraper dengan data mentah (objek)
+            // Sistem akan mengecek kolom di dalam service
+            const finalData = await runScraper(rawData);
+            
+            // Hapus file temp setelah proses selesai
             fs.unlinkSync(req.file.path);
 
-            console.log(`📥 Menerima ${keywords.length} judul buku dari CSV.`);
-            
-            if (keywords.length > 0) {
-                try {
-                    const data = await runScraper(keywords);
-                    res.render('index', { results: data });
-                } catch (error) {
-                    console.error(error);
-                    res.render('index', { results: [] });
-                }
-            } else {
-                res.send("File CSV kosong atau format kolom 'Judul' tidak ditemukan.");
-            }
-        });
+            res.render('index', { results: finalData });
+        } else {
+            fs.unlinkSync(req.file.path);
+            res.send("File Excel kosong atau tidak terbaca.");
+        }
+
+    } catch (error) {
+        console.error("Error processing file:", error);
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        res.render('index', { results: [] });
+    }
 });
 
 app.listen(PORT, () => {

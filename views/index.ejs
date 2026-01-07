@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk OPAC Scraper</title>
+    <title>Smart Excel OPAC Scraper</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .table-wrapper { overflow-x: auto; max-height: 600px; }
+        .table-wrapper { overflow-x: auto; max-height: 700px; }
         td, th { white-space: nowrap; padding: 0.75rem; border: 1px solid #e5e7eb; font-size: 0.875rem; }
         thead th { position: sticky; top: 0; background: #1f2937; z-index: 10; }
         tr:nth-child(even) { background-color: #f9fafb; }
@@ -14,31 +14,34 @@
 </head>
 <body class="bg-gray-100 min-h-screen p-6 font-sans">
 
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-full mx-auto">
         
         <!-- FORM UPLOAD -->
-        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">📚 Bulk OPAC Scraper</h1>
-            <p class="text-gray-600 mb-6">Upload file CSV berisi daftar judul buku (kolom pertama atau bernama 'Judul') untuk diproses secara otomatis.</p>
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8 max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">📊 Smart Excel OPAC Scraper</h1>
+            <p class="text-gray-600 mb-6">
+                Upload file <strong>Excel (.xlsx / .xls)</strong>. 
+                <br>Sistem akan membaca data, dan <strong>hanya melengkapi kolom yang kosong</strong> berdasarkan Judul Buku.
+            </p>
             
-            <form action="/scrape-csv" method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-4 items-end">
+            <form action="/scrape-excel" method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-4 items-end">
                 <div class="w-full">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Pilih File CSV</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Pilih File Excel</label>
                     <input 
                         type="file" 
-                        name="csvFile" 
-                        accept=".csv"
+                        name="excelFile" 
+                        accept=".xlsx, .xls"
                         class="block w-full text-sm text-gray-500
                         file:mr-4 file:py-2.5 file:px-4
                         file:rounded-full file:border-0
                         file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100 border border-gray-300 rounded-lg p-2"
+                        file:bg-green-50 file:text-green-700
+                        hover:file:bg-green-100 border border-gray-300 rounded-lg p-2"
                         required
                     >
                 </div>
-                <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-md w-full sm:w-auto h-[50px]">
-                    🚀 Mulai Scrape
+                <button type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-700 transition shadow-md w-full sm:w-auto h-[50px]">
+                    🔍 Proses Data
                 </button>
             </form>
         </div>
@@ -48,64 +51,53 @@
             <div class="bg-white rounded-xl shadow-lg p-8">
                 <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                     <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        <span>Hasil Proses</span>
-                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded"><%= results.length %> Data</span>
+                        <span>Hasil Gabungan</span>
+                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded"><%= results.length %> Baris</span>
                     </h2>
                     
                     <% if (results.length > 0) { %>
-                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow flex items-center gap-2 transition">
+                        <button onclick="exportToExcel()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow flex items-center gap-2 transition">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                            Download Excel (.csv)
+                            Download Hasil (.xlsx)
                         </button>
                     <% } %>
                 </div>
 
                 <% if (results.length > 0) { %>
+                    <!-- Generate Table Dinamis berdasarkan Key dari Object Pertama -->
+                    <% const columns = Object.keys(results[0]); %>
+                    
                     <div class="table-wrapper border rounded-lg">
                         <table class="min-w-full text-left" id="resultTable">
                             <thead class="text-white">
                                 <tr>
-                                    <th>Status</th>
-                                    <th>Keyword Pencarian</th>
-                                    <th>Judul Buku</th>
-                                    <th>No. Panggil</th>
-                                    <th>Pengarang</th>
-                                    <th>Penerbitan</th>
-                                    <th>Deskripsi Fisik</th>
-                                    <th>ISBN</th>
-                                    <th>Subjek</th>
-                                    <th>Konten</th>
-                                    <th>Media</th>
-                                    <th>Penyimpan Media</th>
-                                    <th>Bahasa</th>
-                                    <th>Target Pembaca</th>
+                                    <!-- Pastikan Judul & Status di awal agar mudah dibaca -->
+                                    <th class="bg-gray-800">Status</th>
+                                    <% columns.forEach(col => { 
+                                        if(col !== 'Status') { %>
+                                            <th><%= col %></th>
+                                    <% }}) %>
                                 </tr>
                             </thead>
                             <tbody>
-                                <% results.forEach(book => { %>
-                                    <tr class="hover:bg-blue-50">
+                                <% results.forEach(row => { %>
+                                    <tr class="hover:bg-green-50 transition">
                                         <td>
-                                            <% if(book.Status == 'Ditemukan') { %>
-                                                <span class="text-green-600 font-bold">✓ Ada</span>
+                                            <% if(row.Status && row.Status.includes('Diperbarui')) { %>
+                                                <span class="text-green-600 font-bold text-xs uppercase border border-green-200 bg-green-50 px-2 py-1 rounded"><%= row.Status %></span>
+                                            <% } else if (row.Status && row.Status.includes('Data Lama')) { %>
+                                                <span class="text-gray-500 font-bold text-xs uppercase border border-gray-200 bg-gray-50 px-2 py-1 rounded">Skipped</span>
                                             <% } else { %>
-                                                <span class="text-red-500 font-bold">✕ Nihil</span>
+                                                <span class="text-red-500 font-bold text-xs uppercase border border-red-200 bg-red-50 px-2 py-1 rounded"><%= row.Status || '-' %></span>
                                             <% } %>
                                         </td>
-                                        <td class="bg-gray-50"><%= book.JudulPencarian %></td>
-                                        <td class="font-semibold text-blue-700"><%= book.Judul %></td>
-                                        <td class="bg-yellow-50 font-mono text-center"><%= book.NoPanggil %></td>
-                                        <td><%= book.Pengarang %></td>
-                                        <td><%= book.Penerbitan %></td>
-                                        <td><%= book.DeskripsiFisik %></td>
-                                        <td><%= book.ISBN %></td>
-                                        <td><%= book.Subjek %></td>
-                                        <td><%= book.Konten %></td>
-                                        <td><%= book.Media %></td>
-                                        <td><%= book.PenyimpanMedia %></td>
-                                        <td><%= book.Bahasa %></td>
-                                        <td><%= book.TargetPembaca %></td>
+                                        
+                                        <% columns.forEach(col => { 
+                                            if(col !== 'Status') { %>
+                                                <td><%= row[col] || '' %></td>
+                                        <% }}) %>
                                     </tr>
                                 <% }) %>
                             </tbody>
@@ -113,48 +105,25 @@
                     </div>
                 <% } else { %>
                     <div class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                        <p class="text-gray-500 font-medium">Data kosong atau scraping gagal.</p>
+                        <p class="text-gray-500 font-medium">Data kosong atau gagal diproses.</p>
                     </div>
                 <% } %>
             </div>
         <% } %>
     </div>
 
-    <!-- Script Export Excel/CSV -->
+    <!-- Script Export Excel Library (SheetJS untuk client side export) -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script>
         function exportToExcel() {
-            // Ambil data tabel
+            // Menggunakan SheetJS agar format Excel lebih rapi daripada CSV manual
             const table = document.getElementById("resultTable");
-            let csvContent = "data:text/csv;charset=utf-8,";
+            const wb = XLSX.utils.table_to_book(table, {sheet: "Data Lengkap"});
             
-            // Loop baris tabel
-            const rows = table.querySelectorAll("tr");
-            rows.forEach(row => {
-                const cols = row.querySelectorAll("th, td");
-                const rowData = [];
-                
-                cols.forEach(col => {
-                    // Bersihkan text dari koma atau enter agar CSV rapi
-                    let text = col.innerText.replace(/"/g, '""'); 
-                    rowData.push(`"${text}"`);
-                });
-                
-                csvContent += rowData.join(",") + "\r\n";
-            });
-
-            // Trigger download
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            
-            // Nama file dengan timestamp
             const date = new Date();
-            const fileName = `Hasil_Scrape_OPAC_${date.getTime()}.csv`;
+            const fileName = `Hasil_Scrape_Smart_${date.getTime()}.xlsx`;
             
-            link.setAttribute("download", fileName);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            XLSX.writeFile(wb, fileName);
         }
     </script>
 </body>
