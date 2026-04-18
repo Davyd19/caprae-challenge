@@ -7,7 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .table-wrapper { overflow-x: auto; max-height: 700px; }
-        td, th { white-space: nowrap; padding: 0.75rem; border: 1px solid #e5e7eb; font-size: 0.875rem; }
+        /* Set min-width agar kolom dengan header panjang tetap terbaca bagus */
+        td, th { white-space: nowrap; padding: 0.75rem; border: 1px solid #e5e7eb; font-size: 0.875rem; min-width: 150px; }
         thead th { position: sticky; top: 0; background: #1f2937; z-index: 10; }
         tr:nth-child(even) { background-color: #f9fafb; }
     </style>
@@ -20,8 +21,8 @@
         <div class="bg-white rounded-xl shadow-lg p-8 mb-8 max-w-4xl mx-auto">
             <h1 class="text-3xl font-bold text-gray-800 mb-2">📊 Smart Excel OPAC Scraper</h1>
             <p class="text-gray-600 mb-6">
-                Upload file <strong>Excel (.xlsx / .xls)</strong>. 
-                <br>Sistem akan membaca data, dan <strong>hanya melengkapi kolom yang kosong</strong> berdasarkan Judul Buku.
+                Upload file <strong>Template_Import_Buku.xlsx</strong>. 
+                <br>Sistem akan <strong>melengkapi data yang kosong</strong> tanpa mengubah data yang sudah ada.
             </p>
             
             <form action="/scrape-excel" method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-4 items-end">
@@ -73,8 +74,8 @@
                         <table class="min-w-full text-left" id="resultTable">
                             <thead class="text-white">
                                 <tr>
-                                    <!-- Pastikan Judul & Status di awal agar mudah dibaca -->
-                                    <th class="bg-gray-800">Status</th>
+                                    <!-- Kolom Status & Judul di awal (Sticky) -->
+                                    <th class="bg-gray-800 sticky left-0 z-20">Status</th>
                                     <% columns.forEach(col => { 
                                         if(col !== 'Status') { %>
                                             <th><%= col %></th>
@@ -84,16 +85,18 @@
                             <tbody>
                                 <% results.forEach(row => { %>
                                     <tr class="hover:bg-green-50 transition">
-                                        <td>
-                                            <% if(row.Status && row.Status.includes('Diperbarui')) { %>
+                                        <!-- Sel Status -->
+                                        <td class="sticky left-0 bg-white border-r border-gray-200 z-10">
+                                            <% if(row.Status && (row.Status.includes('Dilengkapi') || row.Status.includes('Sukses') || row.Status.includes('Cache'))) { %>
                                                 <span class="text-green-600 font-bold text-xs uppercase border border-green-200 bg-green-50 px-2 py-1 rounded"><%= row.Status %></span>
-                                            <% } else if (row.Status && row.Status.includes('Data Lama')) { %>
-                                                <span class="text-gray-500 font-bold text-xs uppercase border border-gray-200 bg-gray-50 px-2 py-1 rounded">Skipped</span>
+                                            <% } else if (row.Status && row.Status.includes('Judul Kosong')) { %>
+                                                <span class="text-gray-500 font-bold text-xs uppercase border border-gray-200 bg-gray-50 px-2 py-1 rounded">Skip</span>
                                             <% } else { %>
                                                 <span class="text-red-500 font-bold text-xs uppercase border border-red-200 bg-red-50 px-2 py-1 rounded"><%= row.Status || '-' %></span>
                                             <% } %>
                                         </td>
                                         
+                                        <!-- Data Columns -->
                                         <% columns.forEach(col => { 
                                             if(col !== 'Status') { %>
                                                 <td><%= row[col] || '' %></td>
@@ -112,16 +115,20 @@
         <% } %>
     </div>
 
-    <!-- Script Export Excel Library (SheetJS untuk client side export) -->
+    <!-- Script Export Excel Library -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script>
         function exportToExcel() {
-            // Menggunakan SheetJS agar format Excel lebih rapi daripada CSV manual
             const table = document.getElementById("resultTable");
-            const wb = XLSX.utils.table_to_book(table, {sheet: "Data Lengkap"});
+            
+            // SheetJS akan membaca header tabel secara otomatis
+            // Header tabel kita sudah disesuaikan dengan key dari 'services/scraperService.js'
+            // yang sudah SAMA PERSIS dengan Template Excel.
+            
+            const wb = XLSX.utils.table_to_book(table, {sheet: "Data Buku"});
             
             const date = new Date();
-            const fileName = `Hasil_Scrape_Smart_${date.getTime()}.xlsx`;
+            const fileName = `Hasil_Import_Buku_${date.getTime()}.xlsx`;
             
             XLSX.writeFile(wb, fileName);
         }

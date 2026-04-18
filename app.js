@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
     res.render('index', { results: undefined }); 
 });
 
-// Route baru untuk menangani file Excel
+// Route utama untuk menangani file Excel
 app.post('/scrape-excel', upload.single('excelFile'), async (req, res) => {
     if (!req.file) {
         return res.send('Mohon upload file Excel (.xlsx / .xls).');
@@ -33,8 +33,8 @@ app.post('/scrape-excel', upload.single('excelFile'), async (req, res) => {
         console.log(`📥 Menerima ${rawData.length} baris data dari Excel.`);
 
         if (rawData.length > 0) {
-            // 2. Jalankan Scraper dengan data mentah (objek)
-            // Sistem akan mengecek kolom di dalam service
+            // 2. Jalankan Scraper
+            // Hasilnya akan mempertahankan struktur kolom Excel asli + kolom Status
             const finalData = await runScraper(rawData);
             
             // Hapus file temp setelah proses selesai

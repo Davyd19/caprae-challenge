@@ -70,7 +70,7 @@ async function runScraper(dataRows) {
         'Nomor Barcode', 
         'Catatan', 
         'Abstrak',
-        'url gambar buku'
+        'url gambar buku' // Kolom baru untuk URL Gambar
     ];
 
     try {
@@ -192,11 +192,31 @@ async function runScraper(dataRows) {
                         return '';
                     };
 
+                    // ---- LOGIKA PENGAMBILAN COVER YANG DIPERBARUI ----
                     const getCoverUrl = () => {
-                        const img = document.querySelector('img[src*="sampul_koleksi"]');
-                        if (img) return img.src;
-                        const backup = document.querySelector('.image img, .s-cover img');
-                        return backup ? backup.src : '';
+                        let img = document.querySelector('img[src*="sampul_koleksi"]');
+                        if (!img) {
+                            img = document.querySelector('.image img, .s-cover img');
+                        }
+
+                        if (img) {
+                            const src = img.src || '';
+                            const alt = (img.alt || '').toLowerCase();
+                            const title = (img.title || '').toLowerCase();
+                            const srcLower = src.toLowerCase();
+
+                            // Filter: Jika ada kata "sampul tidak tersedia" di src, alt, atau title
+                            const invalidText = 'sampul tidak tersedia';
+                            
+                            if (srcLower.includes(invalidText) || 
+                                alt.includes(invalidText) || 
+                                title.includes(invalidText)) {
+                                return ''; // Kembalikan kosong jika cover invalid
+                            }
+                            
+                            return src;
+                        }
+                        return '';
                     };
 
                     const getEksemplarData = () => {
@@ -226,7 +246,7 @@ async function runScraper(dataRows) {
                     const eks = getEksemplarData();
                     result.noPanggil = eks.callNumber;
                     result.barcode = eks.barcode; 
-                    result.imageUrl = getCoverUrl();
+                    result.imageUrl = getCoverUrl(); // Menggunakan fungsi baru
 
                     return result;
                 });
